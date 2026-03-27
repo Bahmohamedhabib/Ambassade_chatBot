@@ -1,0 +1,11 @@
+# .gitignore
+.env
+__pycache__/
+*.pyc
+*.log
+.venv/
+venv/
+data/raw/private/
+data/index/
+.streamlit/secrets.toml
+.pytest_cache/
