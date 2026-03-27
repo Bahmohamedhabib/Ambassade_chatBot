@@ -19,6 +19,12 @@ st.set_page_config(
 # Initialisation des composants (simulée avec un cache pour éviter de recharger l'index)
 @st.cache_resource
 def init_services():
+    try:
+        import init_db
+        init_db.init_db()
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+
     store = VectorStore()
     retriever = Retriever(store)
     chat_client = MistralChatClient()
