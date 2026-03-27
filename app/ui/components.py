@@ -183,6 +183,56 @@ class UIComponents:
                 padding: 1rem 1.5rem;
                 font-weight: 500;
             }
+
+            /* 📱 RESPONSIVE DESIGN (Mobile & Android) */
+            @media screen and (max-width: 768px) {
+                /* Header / En-tête */
+                .insti-header-container {
+                    padding: 4rem 1rem 1.5rem 1rem;
+                    margin-top: -60px;
+                    margin-bottom: 2rem;
+                    border-radius: 0 0 30px 30px;
+                }
+                .insti-title {
+                    font-size: 1.6rem;
+                    letter-spacing: 1px;
+                }
+                .insti-subtitle {
+                    font-size: 0.95rem;
+                    margin-top: 0.6rem;
+                }
+                .insti-motto {
+                    font-size: 0.65rem;
+                    padding: 6px 16px;
+                    margin-top: 1.5rem;
+                    letter-spacing: 3px;
+                }
+
+                /* Chat Bubbles */
+                div[data-testid="stChatMessage"] {
+                    padding: 1rem;
+                    margin-bottom: 16px;
+                    border-radius: 14px;
+                }
+                div[data-testid="stChatMessage"] p {
+                    font-size: 0.95rem;
+                }
+
+                /* Chat Input (évite le zoom auto sur iOS et s'adapte à l'écran) */
+                div[data-testid="stChatInput"] {
+                    padding-bottom: 0.5rem;
+                }
+                div[data-testid="stChatInput"] textarea {
+                    font-size: 16px !important; /* Empêche le zoom Safari iOS */
+                    padding-left: 15px !important;
+                }
+
+                /* Alertes */
+                div[data-testid="stAlert"] {
+                    padding: 0.8rem 1rem;
+                    font-size: 0.9rem;
+                }
+            }
         </style>
         """, unsafe_allow_html=True)
 
