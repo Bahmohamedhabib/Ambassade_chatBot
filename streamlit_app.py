@@ -16,19 +16,17 @@ st.set_page_config(
     layout="centered"
 )
 
-# Initialisation des composants (simulée avec un cache pour éviter de recharger l'index)
 @st.cache_resource
 def init_services():
-    try:
-        import init_db
-        init_db.init_db()
-    except Exception as e:
-        logger.error(f"Failed to initialize database: {e}")
+    # Suppression de init_db ici pour accélérer radicalement le démarrage du site public.
+    # L'initialisation base de données ne doit se faire que pour le panneau d'admin.
 
     store = VectorStore()
     retriever = Retriever(store)
     chat_client = MistralChatClient()
-    return retriever, chat_client
+    from app.rag.semantic_cache import SemanticCache
+    semantic_cache = SemanticCache()
+    return retriever, chat_client, store, semantic_cache
 
 def main():
     # Détection si on est sur la page d'administration via query params
@@ -50,9 +48,7 @@ def main():
             st.markdown(message["content"])
             # L'affichage des sources a été désactivé à la demande de l'utilisateur
 
-    # Initialiser les services
-    retriever, chat_client = init_services()
-
+    # Le chargement des services (FAISS, Mistral) est retardé jusqu'au premier message (Lazy Loading)
     # Saisie utilisateur
     if prompt := st.chat_input("Posez votre question (ex: Quels documents pour renouveler un passeport ?)"):
         # Afficher la question
@@ -70,25 +66,74 @@ def main():
             
         sanitized_prompt = InputValidator.sanitize_query(prompt)
         
+        # Extraction de l'historique de conversation (sans la question actuelle)
+        chat_history = st.session_state.messages[:-1]
+        
         # Traitement
         with st.chat_message("assistant", avatar="🏛️"):
-            with st.spinner("Recherche dans les documents officiels..."):
-                # 1. RAG Retrieval
-                context, sources = retriever.retrieve_context(sanitized_prompt)
-                sources_found = len(sources) > 0
+            # Initialisation (ou récupération du cache) des cerveaux de l'IA (Lazy Load ultra-rapide)
+            retriever, chat_client, store, semantic_cache = init_services()
+            
+            # 1. ROUTING : Détection d'intention conversationnelle locale (sans API Mistral)
+            if InputValidator.is_conversational(sanitized_prompt):
+                local_response = InputValidator.get_conversational_response(sanitized_prompt)
                 
-                # 2. Génération conditionnée
-                response = chat_client.generate_response(sanitized_prompt, context, sources_found)
+                # Simulation esthétique du stream pour la continuité de l'expérience
+                import time
+                def stream_local():
+                    for word in local_response.split():
+                        yield word + " "
+                        time.sleep(0.04)
+                        
+                full_response = st.write_stream(stream_local())
+                sources_found = False
+                sources = []
+            
+            # 2. RAG : Pipeline standard pour toutes les requêtes d'information
+            else:
+                # --- VÉRIFICATION DU CACHE SÉMANTIQUE ---
+                cached_response = None
+                query_emb = None
                 
-                # 3. Affichage
-                st.markdown(response)
-                # L'affichage des sources a été désactivé
+                # On n'utilise le cache que sur le premier message de la conversation
+                if not chat_history:
+                    query_emb = store.get_embedding(sanitized_prompt)
+                    cached_response = semantic_cache.check_cache(query_emb, threshold=0.95)
+                
+                if cached_response:
+                    # ⚡ CACHE HIT
+                    import time
+                    def stream_cache():
+                        yield "⚡ *(Réponse optimisée : Cache Sémantique)*\n\n"
+                        for word in cached_response.split():
+                            yield word + " "
+                            time.sleep(0.015)
+                            
+                    full_response = st.write_stream(stream_cache())
+                    sources_found = False
+                    sources = []
                     
+                else:
+                    # ❄️ CACHE MISS : Exécution Normale
+                    with st.spinner("Recherche dans les documents officiels..."):
+                        search_query = sanitized_prompt
+                        if chat_history:
+                            search_query = chat_client.rewrite_query(sanitized_prompt, chat_history)
+
+                        context, sources = retriever.retrieve_context(search_query)
+                        sources_found = len(sources) > 0
+                        
+                    response_stream = chat_client.generate_response_stream(sanitized_prompt, context, sources_found, history=chat_history)
+                    full_response = st.write_stream(response_stream)
+                    
+                    # Ajout au cache sémantique si c'est une question indépendante et qu'on a trouvé des sources
+                    if not chat_history and sources_found and query_emb is not None:
+                        semantic_cache.add_to_cache(query_emb, sanitized_prompt, full_response)
                     
             # Sauvegarder dans l'historique
             st.session_state.messages.append({
                 "role": "assistant", 
-                "content": response,
+                "content": full_response,
                 "sources": sources if sources_found else None
             })
 

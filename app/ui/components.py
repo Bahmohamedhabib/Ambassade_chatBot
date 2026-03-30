@@ -11,23 +11,27 @@ class UIComponents:
         """Injecte du CSS personnalisé et hyper-robuste (!important) pour forcer le responsive sur Streamlit."""
         st.markdown("""
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500&display=swap');
 
             /* =========================================
-               1. SURCHARGES STRUCTURELLES STREAMLIT 
+               1. SURCHARGES & FOND MESH GRADIENT
                ========================================= */
             [data-testid="stHeader"] { display: none !important; height: 0 !important; }
             #MainMenu { visibility: hidden !important; display: none !important; }
             footer { visibility: hidden !important; display: none !important; }
 
-            /* Le conteneur maître : on garde les marges verticales mais on laisse Streamlit gérer max-width */
             .block-container {
                 padding-top: 1rem !important;
-                padding-bottom: 6rem !important;
+                padding-bottom: 8rem !important;
+                max-width: 850px !important;
             }
 
             .stApp {
-                background-color: #f4f7fb !important;
+                background-color: #fafbfc !important;
+                background-image: 
+                    radial-gradient(circle at 15% 50%, rgba(247, 127, 0, 0.04) 0%, transparent 50%),
+                    radial-gradient(circle at 85% 30%, rgba(0, 128, 51, 0.04) 0%, transparent 50%) !important;
+                background-attachment: fixed !important;
                 font-family: 'Inter', sans-serif !important;
                 color: #1e1e1e !important;
             }
@@ -51,72 +55,83 @@ class UIComponents:
             ::-webkit-scrollbar-thumb:hover { background: rgba(0, 128, 0, 0.5); }
 
             /* =========================================
-               3. DESIGN DES BULLES (DESKTOP)
+               3. CHAT BUBBLES (GLASSMORPHISM)
                ========================================= */
             div[data-testid="stChatMessage"] {
-                background: rgba(255, 255, 255, 0.95) !important;
-                backdrop-filter: blur(10px) !important;
-                -webkit-backdrop-filter: blur(10px) !important;
-                border: 1px solid rgba(255,255,255,0.4) !important;
-                border-radius: 20px !important;
-                padding: 1.5rem !important;
-                margin-bottom: 24px !important;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important;
-                transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease !important;
+                background: rgba(255, 255, 255, 0.65) !important;
+                backdrop-filter: blur(16px) saturate(180%) !important;
+                -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+                border: 1px solid rgba(255, 255, 255, 0.8) !important;
+                border-radius: 24px !important;
+                padding: 1.5rem 1.8rem !important;
+                margin-bottom: 1.5rem !important;
+                box-shadow: 0 8px 32px rgba(31, 38, 135, 0.04) !important;
+                transition: transform 0.3s ease, box-shadow 0.3s ease !important;
                 animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-                color: #1e1e1e !important;
+                color: #2d3748 !important;
             }
-            div[data-testid="stChatMessage"] * {
-                color: #1e1e1e !important;
+            div[data-testid="stChatMessage"] p, div[data-testid="stChatMessage"] li {
+                font-size: 1.05rem !important;
+                line-height: 1.6 !important;
+                color: #2d3748 !important;
+                letter-spacing: -0.01em !important;
             }
             div[data-testid="stChatMessage"]:hover {
                 transform: translateY(-2px) !important;
-                box-shadow: 0 15px 35px rgba(0, 128, 0, 0.07) !important;
+                box-shadow: 0 12px 40px rgba(31, 38, 135, 0.08) !important;
             }
             div[data-testid="stChatMessageAvatar"] {
                 border-radius: 50% !important;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+                background: linear-gradient(135deg, #ffffff, #f0f0f0) !important;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.08) !important;
+                border: 1px solid rgba(255,255,255,0.8) !important;
             }
 
-            /* Champ de saisie utilisateur mis à jour */
+            /* =========================================
+               4. BARRE DE SAISIE (FLOATING INPUT)
+               ========================================= */
             div[data-testid="stChatInput"] {
                 padding-bottom: 2rem !important;
+                background: transparent !important;
             }
-            /* Cibler le wrapper au lieu du textarea pour ne pas casser le layout flex du bouton d'envoi */
             div[data-testid="stChatInput"] > div {
-                border-radius: 30px !important;
-                border: 2px solid transparent !important;
-                background-color: #ffffff !important;
-                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06) !important;
-                transition: all 0.4s ease !important;
-                padding-left: 10px !important;
+                background: rgba(255, 255, 255, 0.85) !important;
+                backdrop-filter: blur(20px) !important;
+                border-radius: 40px !important;
+                border: 1px solid rgba(255, 255, 255, 0.6) !important;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08) !important;
+                padding: 4px 10px !important;
+                transition: all 0.3s ease !important;
             }
             div[data-testid="stChatInput"] > div:focus-within {
-                border-color: #f77f00 !important;
+                border-color: rgba(247, 127, 0, 0.4) !important;
+                box-shadow: 0 15px 50px rgba(247, 127, 0, 0.12) !important;
+                transform: translateY(-2px) !important;
                 animation: pulseGlow 3s infinite ease-in-out !important;
             }
             div[data-testid="stChatInput"] textarea {
-                color: #333333 !important;
-                font-size: 1.05rem !important;
+                color: #1a202c !important;
+                font-family: 'Inter', sans-serif !important;
+                font-size: 1.1rem !important;
             }
             div[data-testid="stChatInput"] textarea:focus {
                 outline: none !important;
             }
 
             /* =========================================
-               4. HEADER & TYPOGRAPHIE
+               5. HEADER LUXURY (OUTFIT FONT)
                ========================================= */
             .insti-header-container {
                 display: flex !important;
                 flex-direction: column !important;
                 align-items: center !important;
                 justify-content: center !important;
-                padding: 3rem 2rem !important;
-                background: linear-gradient(135deg, #006600 0%, #008033 50%, #f77f00 100%) !important;
-                border-radius: 20px !important;
+                padding: 3.5rem 2rem !important;
+                background: linear-gradient(135deg, #008033 0%, #005a22 100%) !important;
+                border-radius: 32px !important;
                 margin-top: 1.5rem !important;
                 margin-bottom: 3.5rem !important;
-                box-shadow: 0 20px 50px rgba(0, 102, 0, 0.2) !important;
+                box-shadow: 0 20px 50px rgba(0, 128, 51, 0.25), inset 0 2px 0 rgba(255,255,255,0.2) !important;
                 color: white !important;
                 text-align: center !important;
                 position: relative !important;
@@ -124,52 +139,51 @@ class UIComponents:
                 width: 100% !important;
                 box-sizing: border-box !important;
             }
-            .insti-header-container::before {
+            /* Lueur orange en haut à droite pour rappeler le drapeau */
+            .insti-header-container::after {
                 content: '' !important;
                 position: absolute !important;
-                top: 0; left: 0; right: 0; bottom: 0 !important;
-                background: radial-gradient(circle at 20% 150%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                            radial-gradient(circle at 80% -50%, rgba(0,0,0,0.2) 0%, transparent 50%) !important;
-                pointer-events: none !important;
-                z-index: 0 !important;
+                top: -50px; right: -50px;
+                width: 200px; height: 200px;
+                background: radial-gradient(circle, rgba(247, 127, 0, 0.8) 0%, transparent 60%);
+                filter: blur(40px);
+                z-index: 0;
             }
             .insti-title {
-                font-family: 'Inter', sans-serif !important;
-                font-size: clamp(1.8rem, 4vw, 2.6rem) !important;
-                font-weight: 800 !important;
+                font-family: 'Outfit', sans-serif !important;
+                font-size: clamp(2rem, 5vw, 3.2rem) !important;
+                font-weight: 700 !important;
                 margin: 0 !important;
-                text-transform: uppercase !important;
-                letter-spacing: 2px !important;
-                text-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
-                line-height: 1.2 !important;
+                letter-spacing: -1px !important;
+                line-height: 1.1 !important;
                 z-index: 1 !important;
                 color: #ffffff !important;
+                text-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
             }
             .insti-subtitle {
-                font-family: 'Inter', sans-serif !important;
-                font-size: clamp(1rem, 2vw, 1.2rem) !important;
-                font-weight: 400 !important;
+                font-family: 'Outfit', sans-serif !important;
+                font-size: clamp(1.1rem, 2vw, 1.4rem) !important;
+                font-weight: 300 !important;
                 margin-top: 1rem !important;
-                color: #ffffff !important;
-                opacity: 0.9 !important;
+                color: rgba(255,255,255,0.9) !important;
                 z-index: 1 !important;
+                letter-spacing: 0.5px !important;
             }
             .insti-motto {
                 font-family: 'Inter', sans-serif !important;
-                font-size: clamp(0.7rem, 1.5vw, 0.85rem) !important;
-                font-weight: 700 !important;
-                margin-top: 2rem !important;
+                font-size: 0.8rem !important;
+                font-weight: 600 !important;
+                margin-top: 2.5rem !important;
                 color: #ffffff !important; 
-                letter-spacing: 5px !important;
+                letter-spacing: 6px !important;
                 text-transform: uppercase !important;
-                background: rgba(255, 255, 255, 0.15) !important;
-                border: 1px solid rgba(255, 255, 255, 0.3) !important;
-                padding: 8px 24px !important;
-                border-radius: 40px !important;
-                backdrop-filter: blur(12px) !important;
-                -webkit-backdrop-filter: blur(12px) !important;
-                box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+                background: rgba(255, 255, 255, 0.1) !important;
+                border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                padding: 10px 30px !important;
+                border-radius: 50px !important;
+                backdrop-filter: blur(10px) !important;
                 z-index: 1 !important;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
             }
 
             div[data-testid="stAlert"] {

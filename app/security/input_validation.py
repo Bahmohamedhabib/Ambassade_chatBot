@@ -47,19 +47,37 @@ class InputValidator:
 
     @staticmethod
     def is_conversational(query: str) -> bool:
-        """Détecte les requêtes conversationnelles simples (salutations, remerciements)."""
-        clean_query = query.strip().lower()
+        """Détecte les requêtes conversationnelles simples (salutations, remerciements, small talk)."""
+        clean_query = query.strip().lower().replace("?", "").replace("!", "").replace(".", "").strip()
         conversational_phrases = [
             "bonjour", "bonsoir", "salut", "hello", "coucou", 
-            "merci", "merci beaucoup", "je vous remercie",
-            "au revoir", "bonne journée", "bonne soirée"
+            "merci", "merci beaucoup", "je vous remercie", "top", "super",
+            "au revoir", "bonne journée", "bonne soirée", "a bientot",
+            "comment ça va", "comment vas-tu", "ça va", 
+            "qui es-tu", "qui es tu", "tu es qui", "que fais tu", "t'es qui"
         ]
         
         if clean_query in conversational_phrases:
             return True
             
         for phrase in conversational_phrases:
-            if clean_query.startswith(phrase) and len(clean_query) < 30: 
+            if clean_query.startswith(phrase) and len(clean_query) < 35: 
                 return True
                 
         return False
+
+    @staticmethod
+    def get_conversational_response(query: str) -> str:
+        """Retourne une réponse instantanée locale selon l'intention reconnue."""
+        clean_query = query.strip().lower()
+        if "merci" in clean_query or "super" in clean_query or "top" in clean_query:
+            return "Je vous en prie. N'hésitez pas si vous avez d'autres questions pour l'Ambassade !"
+        if "au revoir" in clean_query or "bonne " in clean_query:
+            return "Au revoir et excellente journée. Les services consulaires restent à votre disposition."
+        if "ça va" in clean_query or "vas-tu" in clean_query:
+            return "Je suis un programme, je n'ai donc pas de sentiments, mais je suis parfaitement opérationnel pour répondre à vos questions administratives ! Que puis-je faire pour vous ?"
+        if "qui es" in clean_query or "que fais" in clean_query:
+            return "Je suis l'assistant virtuel de l'Ambassade de Côte d'Ivoire. Mon rôle est de vous guider instantanément dans vos démarches (Passeport, Visa, Légalisation, État Civil). Quelle est votre question ?"
+            
+        # Par défaut (salutations générales)
+        return "Bonjour ! Je suis l'assistant virtuel de l'Ambassade de Côte d'Ivoire. Comment puis-je vous aider dans vos démarches aujourd'hui ?"

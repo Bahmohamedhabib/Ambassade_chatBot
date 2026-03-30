@@ -12,3 +12,4 @@ langchain-text-splitters>=0.2.0
 SQLAlchemy>=2.0.0
 bcrypt>=4.0.0
 plotly>=5.14.0
+streamlit-mic-recorder>=0.0.3
