@@ -1,11 +1,7 @@
 import streamlit as st
 from app.ui.components import UIComponents
 from app.security.input_validation import InputValidator
-from app.rag.vector_store import VectorStore
-from app.rag.retriever import Retriever
-from app.services.mistral_client import MistralChatClient
 from app.utils.logger import setup_logger
-from app.ui.admin_pages import render_admin_dashboard
 
 logger = setup_logger("streamlit_app")
 
@@ -19,12 +15,15 @@ st.set_page_config(
 @st.cache_resource
 def init_services():
     # Suppression de init_db ici pour accélérer radicalement le démarrage du site public.
-    # L'initialisation base de données ne doit se faire que pour le panneau d'admin.
+    # Imports paresseux pour éviter de bloquer l'initialisation du site public :
+    from app.rag.vector_store import VectorStore
+    from app.rag.retriever import Retriever
+    from app.services.mistral_client import MistralChatClient
+    from app.rag.semantic_cache import SemanticCache
 
     store = VectorStore()
     retriever = Retriever(store)
     chat_client = MistralChatClient()
-    from app.rag.semantic_cache import SemanticCache
     semantic_cache = SemanticCache()
     return retriever, chat_client, store, semantic_cache
 
@@ -32,6 +31,8 @@ def main():
     # Détection si on est sur la page d'administration via query params
     query_params = st.query_params
     if "admin" in query_params:
+        # Import retardé très ciblé (Pandas, Plotly, SQLAlchemy)
+        from app.ui.admin_pages import render_admin_dashboard
         render_admin_dashboard()
         return
 

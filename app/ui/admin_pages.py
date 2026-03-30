@@ -29,6 +29,13 @@ def render_login_page():
 
 def render_admin_dashboard():
     """Point d'entrée principal du dashboard admin."""
+    # S'assurer que la base de données est initialisée avant toute requête
+    try:
+        import init_db
+        init_db.init_db()
+    except Exception as e:
+        st.error(f"Erreur d'initialisation de la base de données: {e}")
+        
     if not st.session_state.get("admin_logged_in", False):
         render_login_page()
         st.stop()
