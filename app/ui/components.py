@@ -16,18 +16,14 @@ class UIComponents:
             /* =========================================
                1. SURCHARGES STRUCTURELLES STREAMLIT 
                ========================================= */
-            /* Suppression totale des menus (empêche le conflit d'espace en haut) */
             [data-testid="stHeader"] { display: none !important; height: 0 !important; }
             #MainMenu { visibility: hidden !important; display: none !important; }
             footer { visibility: hidden !important; display: none !important; }
 
-            /* Le conteneur maître de Streamlit : on force les marges à notre volonté */
+            /* Le conteneur maître : on garde les marges verticales mais on laisse Streamlit gérer max-width */
             .block-container {
                 padding-top: 1rem !important;
-                padding-bottom: 4rem !important;
-                padding-left: 2rem !important;
-                padding-right: 2rem !important;
-                max-width: 100% !important;
+                padding-bottom: 6rem !important;
             }
 
             .stApp {
@@ -54,7 +50,7 @@ class UIComponents:
             ::-webkit-scrollbar-thumb:hover { background: rgba(0, 128, 0, 0.5); }
 
             /* =========================================
-               3. DESIGN DES BULLES (DESKTOP / DEFAULT)
+               3. DESIGN DES BULLES (DESKTOP)
                ========================================= */
             div[data-testid="stChatMessage"] {
                 background: rgba(255, 255, 255, 0.85) !important;
@@ -69,7 +65,7 @@ class UIComponents:
                 animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
             }
             div[data-testid="stChatMessage"]:hover {
-                transform: translateY(-3px) scale(1.01) !important;
+                transform: translateY(-2px) !important;
                 box-shadow: 0 15px 35px rgba(0, 128, 0, 0.07) !important;
             }
             div[data-testid="stChatMessageAvatar"] {
@@ -77,44 +73,51 @@ class UIComponents:
                 box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
             }
 
-            /* Champ de saisie utilisateur */
+            /* Champ de saisie utilisateur mis à jour */
             div[data-testid="stChatInput"] {
                 padding-bottom: 2rem !important;
             }
-            div[data-testid="stChatInput"] textarea {
+            /* Cibler le wrapper au lieu du textarea pour ne pas casser le layout flex du bouton d'envoi */
+            div[data-testid="stChatInput"] > div {
                 border-radius: 30px !important;
                 border: 2px solid transparent !important;
                 background-color: #ffffff !important;
                 box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06) !important;
                 transition: all 0.4s ease !important;
-                padding-left: 20px !important;
+                padding-left: 10px !important;
+            }
+            div[data-testid="stChatInput"] > div:focus-within {
+                border-color: #f77f00 !important;
+                animation: pulseGlow 3s infinite ease-in-out !important;
+            }
+            div[data-testid="stChatInput"] textarea {
+                color: #333333 !important;
                 font-size: 1.05rem !important;
             }
             div[data-testid="stChatInput"] textarea:focus {
-                border-color: #f77f00 !important;
-                background-color: #fffbf5 !important;
-                animation: pulseGlow 3s infinite ease-in-out !important;
                 outline: none !important;
             }
 
             /* =========================================
-               4. HEADER & TYPOGRAPHIE (DESKTOP)
+               4. HEADER & TYPOGRAPHIE
                ========================================= */
             .insti-header-container {
                 display: flex !important;
                 flex-direction: column !important;
                 align-items: center !important;
                 justify-content: center !important;
-                padding: 3.5rem 2rem 2.5rem 2rem !important;
+                padding: 3rem 2rem !important;
                 background: linear-gradient(135deg, #006600 0%, #008033 50%, #f77f00 100%) !important;
                 border-radius: 20px !important;
-                margin-top: 0 !important; /* Le header natif étant caché, on n'a plus besoin du -80px ! */
+                margin-top: 0 !important;
                 margin-bottom: 3.5rem !important;
                 box-shadow: 0 20px 50px rgba(0, 102, 0, 0.2) !important;
                 color: white !important;
                 text-align: center !important;
                 position: relative !important;
                 overflow: hidden !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
             }
             .insti-header-container::before {
                 content: '' !important;
@@ -127,7 +130,7 @@ class UIComponents:
             }
             .insti-title {
                 font-family: 'Inter', sans-serif !important;
-                font-size: 2.6rem !important;
+                font-size: clamp(1.8rem, 4vw, 2.6rem) !important;
                 font-weight: 800 !important;
                 margin: 0 !important;
                 text-transform: uppercase !important;
@@ -139,7 +142,7 @@ class UIComponents:
             }
             .insti-subtitle {
                 font-family: 'Inter', sans-serif !important;
-                font-size: 1.2rem !important;
+                font-size: clamp(1rem, 2vw, 1.2rem) !important;
                 font-weight: 400 !important;
                 margin-top: 1rem !important;
                 color: #ffffff !important;
@@ -148,7 +151,7 @@ class UIComponents:
             }
             .insti-motto {
                 font-family: 'Inter', sans-serif !important;
-                font-size: 0.85rem !important;
+                font-size: clamp(0.7rem, 1.5vw, 0.85rem) !important;
                 font-weight: 700 !important;
                 margin-top: 2rem !important;
                 color: #ffffff !important; 
@@ -179,35 +182,28 @@ class UIComponents:
                ========================================= */
             @media screen and (max-width: 768px) {
                 .block-container {
-                    padding-left: 0.8rem !important;
-                    padding-right: 0.8rem !important;
-                    padding-top: 0.5rem !important;
-                    padding-bottom: 2rem !important;
+                    padding-left: 1rem !important;
+                    padding-right: 1rem !important;
+                    padding-top: 1rem !important;
+                    padding-bottom: 5rem !important;
                 }
 
                 .insti-header-container {
-                    padding: 2.5rem 0.8rem 1.5rem 0.8rem !important;
+                    padding: 2rem 1rem !important;
                     margin-bottom: 1.5rem !important;
                     border-radius: 16px !important;
                 }
                 .insti-title {
-                    font-size: 1.4rem !important;
-                    letter-spacing: 1px !important;
-                    text-shadow: none !important; /* Allège le rendu sur téléphone */
-                }
-                .insti-subtitle {
-                    font-size: 0.9rem !important;
-                    margin-top: 0.5rem !important;
+                    text-shadow: none !important;
                 }
                 .insti-motto {
-                    font-size: 0.6rem !important;
                     padding: 5px 12px !important;
                     margin-top: 1.2rem !important;
                     letter-spacing: 2px !important;
                 }
 
                 div[data-testid="stChatMessage"] {
-                    padding: 1rem !important;
+                    padding: 1.2rem !important;
                     margin-bottom: 12px !important;
                     border-radius: 12px !important;
                     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
@@ -221,16 +217,16 @@ class UIComponents:
                     height: 32px !important;
                 }
 
-                /* Zone de texte mobile - Optimisée pour pouce et clavier virtuel */
+                /* Zone de texte mobile - Optimisée */
                 div[data-testid="stChatInput"] {
-                    padding-bottom: 0.5rem !important;
-                    padding-left: 0 !important;
-                    padding-right: 0 !important;
+                    padding-bottom: 1rem !important;
+                }
+                div[data-testid="stChatInput"] > div {
+                    border-radius: 24px !important;
+                    padding: 5px !important;
                 }
                 div[data-testid="stChatInput"] textarea {
                     font-size: 16px !important; /* CRITIQUE: Empêche le zoom auto sur iOS et Android */
-                    padding: 12px 15px !important;
-                    border-radius: 20px !important;
                 }
 
                 div[data-testid="stAlert"] {
