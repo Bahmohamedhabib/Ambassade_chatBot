@@ -29,6 +29,7 @@ class UIComponents:
             .stApp {
                 background-color: #f4f7fb !important;
                 font-family: 'Inter', sans-serif !important;
+                color: #1e1e1e !important;
             }
 
             /* =========================================
@@ -53,7 +54,7 @@ class UIComponents:
                3. DESIGN DES BULLES (DESKTOP)
                ========================================= */
             div[data-testid="stChatMessage"] {
-                background: rgba(255, 255, 255, 0.85) !important;
+                background: rgba(255, 255, 255, 0.95) !important;
                 backdrop-filter: blur(10px) !important;
                 -webkit-backdrop-filter: blur(10px) !important;
                 border: 1px solid rgba(255,255,255,0.4) !important;
@@ -63,6 +64,10 @@ class UIComponents:
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important;
                 transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease !important;
                 animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+                color: #1e1e1e !important;
+            }
+            div[data-testid="stChatMessage"] * {
+                color: #1e1e1e !important;
             }
             div[data-testid="stChatMessage"]:hover {
                 transform: translateY(-2px) !important;
@@ -109,7 +114,7 @@ class UIComponents:
                 padding: 3rem 2rem !important;
                 background: linear-gradient(135deg, #006600 0%, #008033 50%, #f77f00 100%) !important;
                 border-radius: 20px !important;
-                margin-top: 0 !important;
+                margin-top: 1.5rem !important;
                 margin-bottom: 3.5rem !important;
                 box-shadow: 0 20px 50px rgba(0, 102, 0, 0.2) !important;
                 color: white !important;
@@ -176,6 +181,9 @@ class UIComponents:
                 padding: 1rem 1.5rem !important;
                 font-weight: 500 !important;
             }
+            div[data-testid="stAlert"] * {
+                color: #1e1e1e !important;
+            }
 
             /* =========================================
                5. 📱 FIX RESPONSIVE ABSOLU (MOBILE)
@@ -189,7 +197,8 @@ class UIComponents:
                 }
 
                 .insti-header-container {
-                    padding: 2rem 1rem !important;
+                    padding: 2.5rem 1rem 2rem 1rem !important;
+                    margin-top: 0.5rem !important;
                     margin-bottom: 1.5rem !important;
                     border-radius: 16px !important;
                 }
