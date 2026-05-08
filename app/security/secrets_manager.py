@@ -25,3 +25,11 @@ class SecretsManager:
     @staticmethod
     def get_log_level() -> str:
         return os.environ.get("LOG_LEVEL", "INFO")
+
+    @staticmethod
+    def get_admin_username() -> str:
+        return os.environ.get("ADMIN_USERNAME", "admin")
+
+    @staticmethod
+    def get_admin_password() -> str:
+        return os.environ.get("ADMIN_PASSWORD", "admin123")

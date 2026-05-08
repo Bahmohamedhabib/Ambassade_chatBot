@@ -9,8 +9,19 @@ logger = setup_logger("streamlit_app")
 st.set_page_config(
     page_title="Ambassade de Côte d'Ivoire",
     page_icon="🇨🇮",
-    layout="centered"
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
+
+# Injection des balises meta pour mobile (viewport, themeColor, etc.)
+# Ceci est injecté avant tout autre composant pour garantir le bon rendu mobile.
+st.markdown("""
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#006e2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+""", unsafe_allow_html=True)
 
 @st.cache_resource
 def init_services():
@@ -20,12 +31,17 @@ def init_services():
     from app.rag.retriever import Retriever
     from app.services.mistral_client import MistralChatClient
     from app.rag.semantic_cache import SemanticCache
+    from app.rag.graph import EmbassyGraph
 
     store = VectorStore()
     retriever = Retriever(store)
     chat_client = MistralChatClient()
     semantic_cache = SemanticCache()
-    return retriever, chat_client, store, semantic_cache
+    
+    # Initialisation du graphe LangGraph
+    graph = EmbassyGraph(retriever, chat_client, semantic_cache, store)
+    
+    return retriever, chat_client, store, semantic_cache, graph
 
 def main():
     # Détection si on est sur la page d'administration via query params
@@ -42,12 +58,15 @@ def main():
     # Affichage de l'historique de chat
     if "messages" not in st.session_state:
         st.session_state.messages = []
+
+    # Ecran d'accueil si aucun message
+    if not st.session_state.messages:
+        UIComponents.render_welcome_screen()
         
     for message in st.session_state.messages:
         avatar_icon = "🏛️" if message["role"] == "assistant" else "👤"
         with st.chat_message(message["role"], avatar=avatar_icon):
             st.markdown(message["content"])
-            # L'affichage des sources a été désactivé à la demande de l'utilisateur
 
     # Le chargement des services (FAISS, Mistral) est retardé jusqu'au premier message (Lazy Loading)
     # Saisie utilisateur
@@ -72,64 +91,25 @@ def main():
         
         # Traitement
         with st.chat_message("assistant", avatar="🏛️"):
-            # Initialisation (ou récupération du cache) des cerveaux de l'IA (Lazy Load ultra-rapide)
-            retriever, chat_client, store, semantic_cache = init_services()
+            # Initialisation des services et du graphe
+            retriever, chat_client, store, semantic_cache, graph = init_services()
             
-            # 1. ROUTING : Détection d'intention conversationnelle locale (sans API Mistral)
-            if InputValidator.is_conversational(sanitized_prompt):
-                local_response = InputValidator.get_conversational_response(sanitized_prompt)
+            # Exécution du graphe LangGraph
+            with st.spinner("Réflexion en cours..."):
+                result = graph.run(sanitized_prompt, chat_history)
                 
-                # Simulation esthétique du stream pour la continuité de l'expérience
-                import time
-                def stream_local():
-                    for word in local_response.split():
-                        yield word + " "
-                        time.sleep(0.04)
-                        
-                full_response = st.write_stream(stream_local())
-                sources_found = False
-                sources = []
-            
-            # 2. RAG : Pipeline standard pour toutes les requêtes d'information
-            else:
-                # --- VÉRIFICATION DU CACHE SÉMANTIQUE ---
-                cached_response = None
-                query_emb = None
-                
-                # On n'utilise le cache que sur le premier message de la conversation
-                if not chat_history:
-                    query_emb = store.get_embedding(sanitized_prompt)
-                    cached_response = semantic_cache.check_cache(query_emb, threshold=0.95)
-                
-                if cached_response:
-                    # ⚡ CACHE HIT
-                    import time
-                    def stream_cache():
-                        yield "⚡ *(Réponse optimisée : Cache Sémantique)*\n\n"
-                        for word in cached_response.split():
-                            yield word + " "
-                            time.sleep(0.015)
-                            
-                    full_response = st.write_stream(stream_cache())
-                    sources_found = False
-                    sources = []
-                    
-                else:
-                    # ❄️ CACHE MISS : Exécution Normale
-                    with st.spinner("Recherche dans les documents officiels..."):
-                        search_query = sanitized_prompt
-                        if chat_history:
-                            search_query = chat_client.rewrite_query(sanitized_prompt, chat_history)
+            full_response = result.get("response", "Désolé, je n'ai pas pu générer de réponse.")
+            sources = result.get("sources", [])
+            sources_found = len(sources) > 0
 
-                        context, sources = retriever.retrieve_context(search_query)
-                        sources_found = len(sources) > 0
-                        
-                    response_stream = chat_client.generate_response_stream(sanitized_prompt, context, sources_found, history=chat_history)
-                    full_response = st.write_stream(response_stream)
-                    
-                    # Ajout au cache sémantique si c'est une question indépendante et qu'on a trouvé des sources
-                    if not chat_history and sources_found and query_emb is not None:
-                        semantic_cache.add_to_cache(query_emb, sanitized_prompt, full_response)
+            # Simulation esthétique du stream pour la continuité de l'expérience
+            import time
+            def stream_final_response():
+                for word in full_response.split():
+                    yield word + " "
+                    time.sleep(0.01)
+            
+            st.write_stream(stream_final_response())
                     
             # Sauvegarder dans l'historique
             st.session_state.messages.append({

@@ -1,6 +1,7 @@
 import bcrypt
 from app.db.database import SessionLocal
 from app.db.models import AdminUser
+from app.security.secrets_manager import SecretsManager
 
 class AuthManager:
     """Gestion de l'authentification administrateur avec bcrypt."""
@@ -13,9 +14,17 @@ class AuthManager:
     @staticmethod
     def authenticate_admin(username: str, password: str) -> bool:
         """
-        Vérifie les credentials dans la DB.
+        Vérifie les credentials dans le .env ou dans la DB.
         Retourne True si valide, False sinon.
         """
+        # 1. Vérification via les variables d'environnement
+        env_username = SecretsManager.get_admin_username()
+        env_password = SecretsManager.get_admin_password()
+        
+        if username == env_username and password == env_password:
+            return True
+
+        # 2. Vérification via la base de données (pour d'autres admins potentiels)
         db = SessionLocal()
         try:
             admin = db.query(AdminUser).filter(AdminUser.username == username).first()

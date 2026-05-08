@@ -8,6 +8,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.db.database import engine, Base, SessionLocal
 from app.db.models import AdminUser
+from app.security.secrets_manager import SecretsManager
 
 def init_db():
     print("Création des tables dans la base de données...")
@@ -17,25 +18,27 @@ def init_db():
     db = SessionLocal()
     
     # Vérifier si l'admin existe déjà
-    admin_exists = db.query(AdminUser).filter(AdminUser.username == "admin").first()
+    admin_username = SecretsManager.get_admin_username()
+    admin_password = SecretsManager.get_admin_password()
+    
+    admin_exists = db.query(AdminUser).filter(AdminUser.username == admin_username).first()
     
     if not admin_exists:
-        print("Création de l'utilisateur administrateur par défaut...")
-        # Mot de passe par défaut : admin123 (à changer en production)
+        print(f"Création de l'utilisateur administrateur '{admin_username}'...")
         salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(b"admin123", salt).decode('utf-8')
+        hashed = bcrypt.hashpw(admin_password.encode('utf-8'), salt).decode('utf-8')
         
         new_admin = AdminUser(
-            username="admin",
+            username=admin_username,
             password_hash=hashed,
             role="admin",
             created_at=datetime.utcnow()
         )
         db.add(new_admin)
         db.commit()
-        print("Administrateur créé. Login: 'admin', Password: 'admin123'. Pensez à le changer !")
+        print(f"Administrateur créé. Login: '{admin_username}'.")
     else:
-        print("L'utilisateur admin existe déjà.")
+        print(f"L'utilisateur {admin_username} existe déjà.")
 
     db.close()
 
