@@ -102,14 +102,14 @@ def main():
             sources = result.get("sources", [])
             sources_found = len(sources) > 0
 
-            # Simulation esthétique du stream pour la continuité de l'expérience
+            # Simulation esthétique du stream — sans PyArrow (st.write_stream en dépend)
             import time
-            def stream_final_response():
-                for word in full_response.split():
-                    yield word + " "
-                    time.sleep(0.01)
-            
-            st.write_stream(stream_final_response())
+            placeholder = st.empty()
+            displayed = ""
+            for word in full_response.split():
+                displayed += word + " "
+                placeholder.markdown(displayed)
+                time.sleep(0.01)
                     
             # Sauvegarder dans l'historique
             st.session_state.messages.append({
