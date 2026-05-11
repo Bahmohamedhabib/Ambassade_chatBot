@@ -1,4 +1,5 @@
 import streamlit as st
+import time
 from app.ui.components import UIComponents
 from app.security.input_validation import InputValidator
 from app.utils.logger import setup_logger
@@ -43,6 +44,32 @@ def init_services():
     
     return retriever, chat_client, store, semantic_cache, graph
 
+# ---------------------------------------------------------------------------
+# Rate limiting — 15 requêtes max par fenêtre de 5 minutes (par session)
+# ---------------------------------------------------------------------------
+_RATE_LIMIT_MAX = 15
+_RATE_LIMIT_WINDOW = 300  # secondes
+
+def _check_rate_limit():
+    """Retourne (True, 0) si autorisé, (False, secondes_restantes) si bloqué."""
+    now = time.time()
+    if "rl_count" not in st.session_state:
+        st.session_state.rl_count = 0
+        st.session_state.rl_reset = now + _RATE_LIMIT_WINDOW
+
+    # Réinitialisation automatique de la fenêtre si expirée
+    if now > st.session_state.rl_reset:
+        st.session_state.rl_count = 0
+        st.session_state.rl_reset = now + _RATE_LIMIT_WINDOW
+
+    if st.session_state.rl_count >= _RATE_LIMIT_MAX:
+        remaining = int(st.session_state.rl_reset - now)
+        logger.warning(f"Rate limit atteint ({_RATE_LIMIT_MAX} req/5min).")
+        return False, remaining
+
+    st.session_state.rl_count += 1
+    return True, 0
+
 def main():
     # Détection si on est sur la page d'administration via query params
     query_params = st.query_params
@@ -76,6 +103,17 @@ def main():
         with st.chat_message("user", avatar="👤"):
             st.markdown(prompt)
             
+        # Rate limiting
+        allowed, wait_sec = _check_rate_limit()
+        if not allowed:
+            minutes = wait_sec // 60
+            secondes = wait_sec % 60
+            rate_msg = f"Vous avez atteint la limite de {_RATE_LIMIT_MAX} questions par 5 minutes. Merci de patienter encore {minutes}m{secondes:02d}s."
+            st.session_state.messages.append({"role": "assistant", "content": rate_msg})
+            with st.chat_message("assistant", avatar="🏗️"):
+                st.warning(rate_msg)
+            return
+
         # Validation de sécurité
         if not InputValidator.validate_query(prompt):
             error_msg = "Votre requête ne respecte pas les règles d'utilisation ou contient des éléments non autorisés."

@@ -73,59 +73,63 @@ class MistralChatClient:
             self.model = "mock_model"
             self.is_mock = True
 
-    def generate_response(self, query: str, context: str, sources_found: bool) -> str:
+    def generate_response(self, query: str, context: str, sources_found: bool, history: list = None) -> str:
         """
         Génère une réponse factuelle stricte à partir du contexte fourni.
+        Accepte un historique de conversation optionnel pour les questions de suivi (follow-ups).
         """
-        logger.info(f"Génération de réponse avec {self.model}")
-        
-        # 1. Vérification stricte: Si aucune source n'a été trouvée et que le système
-        # est configuré pour exiger des sources (cas de l'Ambassade).
+        logger.info(f"Génération de réponse avec {self.model} | historique: {len(history) if history else 0} messages")
+
+        # 1. Vérification stricte : si aucune source et question non conversationnelle → refus
         from app.security.input_validation import InputValidator
         is_conversational = InputValidator.is_conversational(query)
-        
+
         if not sources_found and not is_conversational:
             msg = OutputValidator.get_rejection_message()
             AuditLogger.log_interaction(query, False, len(msg), blocked=True, flag="NO_SOURCES", response_text=msg)
             return msg
 
-        # 2. Préparation du prompt système conditionné
+        # 2. Construction du prompt système
         system_content = SYSTEM_PROMPT.format(context=context, question=query)
-        
+
         if self.is_mock:
-            # Mode mock pour développement local sans API payante
             response_text = f"Ceci est une réponse simulée (MOCK) basée sur le contexte : {context[:50]}..."
             AuditLogger.log_interaction(query, True, len(response_text), blocked=False, flag="MOCK", response_text=response_text)
             return response_text
 
-        # 3. Appel à l'API Mistral
+        # 3. Construction des messages : avec ou sans historique
         try:
-            messages = create_messages(system_content, query)
-            
+            if history and len(history) > 0:
+                # On injecte les 4 derniers messages pour les follow-ups (maîtrise des tokens)
+                recent_history = history[-4:]
+                messages = create_messages_with_history(system_content, recent_history, query)
+                logger.info(f"Follow-up détecté — {len(recent_history)} messages injectés dans le contexte LLM.")
+            else:
+                messages = create_messages(system_content, query)
+
             chat_response = self.client.chat.complete(
                 model=self.model,
                 messages=messages,
-                temperature=0.0, # Température à 0 pour maximiser le factuel
+                temperature=0.0,  # Température 0 = factuel maximal
                 max_tokens=1000,
             )
-            
+
             response_text = chat_response.choices[0].message.content
-            
+
             # 4. Validation post-génération
             if not OutputValidator.validate_response(response_text, sources_found):
                 logger.warning("La réponse a échoué à la validation de sortie.")
                 msg = OutputValidator.get_rejection_message()
                 AuditLogger.log_interaction(query, True, len(msg), blocked=True, flag="BAD_OUTPUT", response_text=msg)
                 return msg
-                
-            # Log successful response with correct token usage
+
             token_count = 0
             if hasattr(chat_response, 'usage') and chat_response.usage:
                 token_count = chat_response.usage.total_tokens
-                
+
             AuditLogger.log_interaction(query, True, len(response_text), blocked=False, flag="SUCCESS", token_used=token_count, response_text=response_text)
             return response_text
-            
+
         except Exception as e:
             logger.error(f"Erreur lors de l'appel à l'API Mistral: {e}")
             msg = "Une erreur technique est survenue lors de la génération de la réponse. Veuillez réessayer plus tard."

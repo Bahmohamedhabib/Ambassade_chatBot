@@ -122,22 +122,23 @@ class EmbassyGraph:
         return {"context": context, "sources": sources}
 
     def generator_node(self, state: GraphState) -> Dict:
-        """Génère la réponse finale via Mistral."""
-        # Note: On n'utilise pas le streaming ici car LangGraph retourne l'état final.
-        # Pour le streaming dans Streamlit, on utilisera une approche différente si besoin,
-        # mais ici on implémente la logique de base.
+        """Génère la réponse finale via Mistral avec prise en compte de l'historique."""
         sources_found = len(state["sources"]) > 0
+        chat_history = state.get("chat_history", [])
+
         response = self.chat_client.generate_response(
-            state["query"], 
-            state["context"], 
-            sources_found
+            state["query"],
+            state["context"],
+            sources_found,
+            history=chat_history  # ← transmission de l'historique pour les follow-ups
         )
-        
-        # Mise à jour du cache si nécessaire
-        if not state["chat_history"] and sources_found:
+
+        # Mise à jour du cache uniquement pour le premier tour (sans historique),
+        # car une réponse contextuelle de conversation ne doit pas être mise en cache.
+        if not chat_history and sources_found:
             query_emb = self.store.get_embedding(state["query"])
             self.semantic_cache.add_to_cache(query_emb, state["query"], response)
-            
+
         return {"response": response}
 
     def run(self, query: str, chat_history: List[Dict[str, str]] = None) -> Dict:

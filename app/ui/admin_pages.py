@@ -5,6 +5,16 @@ from app.admin.document_manager import DocumentManager
 from app.rag.indexer_from_db import reindex_all_documents
 from app.ui.analytics import AnalyticsDashboard
 
+@st.cache_resource
+def _init_db_once():
+    """Initialise la base de données une seule fois par démarrage du serveur."""
+    try:
+        import init_db
+        init_db.init_db()
+        return True
+    except Exception as e:
+        return str(e)
+
 def render_login_page():
     """Affiche la page de connexion sécurisée."""
     st.markdown("<h2 style='text-align: center; color: #008000;'>Connexion Administrateur</h2>", unsafe_allow_html=True)
@@ -17,7 +27,6 @@ def render_login_page():
             submitted = st.form_submit_button("Se connecter", use_container_width=True)
             
             if submitted:
-                # Protection de base (brute force etc. serait mieux gérée via rate limit API)
                 if AuthManager.authenticate_admin(username, password):
                     st.session_state.admin_logged_in = True
                     st.session_state.admin_username = username
@@ -29,13 +38,11 @@ def render_login_page():
 
 def render_admin_dashboard():
     """Point d'entrée principal du dashboard admin."""
-    # S'assurer que la base de données est initialisée avant toute requête
-    try:
-        import init_db
-        init_db.init_db()
-    except Exception as e:
-        st.error(f"Erreur d'initialisation de la base de données: {e}")
-        
+    # Init DB une seule fois (via cache) — non plus à chaque rendu de la page
+    result = _init_db_once()
+    if result is not True:
+        st.error(f"Erreur d'initialisation de la base de données: {result}")
+
     if not st.session_state.get("admin_logged_in", False):
         render_login_page()
         st.stop()
